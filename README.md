@@ -1,12 +1,12 @@
-# WWI Image Search and Download System
+# WWI Image Download System
 
-A Python system to search the web for contemporary World War I images and download them with descriptive filenames.
+A Python system to download World War I images from provided URLs with automatic categorization and descriptive naming.
 
 ## Features
 
-- **Google Custom Search Integration**: Uses Google Custom Search API to find historical WWI images
+- **URL-Based Download**: No API keys required - simply provide a list of image URLs
 - **Smart Categorization**: Automatically categorizes images into battles, equipment, portraits, trenches, aircraft, ships, and general
-- **Descriptive Naming**: Generates meaningful filenames based on image metadata and content
+- **Descriptive Naming**: Generates meaningful filenames based on URL analysis and content
 - **Duplicate Detection**: Prevents downloading duplicate images using hash comparison
 - **Image Validation**: Ensures downloaded images meet quality standards
 - **Comprehensive Logging**: Tracks all operations for debugging and monitoring
@@ -19,27 +19,18 @@ A Python system to search the web for contemporary World War I images and downlo
 pip install -r requirements.txt
 ```
 
-### 2. Configure API Keys
+### 2. Prepare Your Image URLs
 
-1. **Google Custom Search API**:
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select existing one
-   - Enable "Custom Search API"
-   - Create API key credentials
-   - Go to [Google Custom Search Engine](https://cse.google.com/cse/all)
-   - Create a new search engine
-   - Enable "Image search" and "Search the entire web"
-   - Copy your Search Engine ID
+The system will create a sample `image_urls.txt` file on first run. Edit this file with your actual image URLs:
 
-2. **Environment Variables**:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` and add your API credentials:
-   ```
-   GOOGLE_API_KEY=your_google_api_key_here
-   GOOGLE_CSE_ID=your_custom_search_engine_id_here
-   ```
+```
+# WWI Image URLs - one per line
+# Lines starting with # are comments
+
+https://example.com/battle-of-somme-1916.jpg
+https://example.com/trench-warfare-western-front.png
+https://example.com/wwi-tank-mark-iv.jpg
+```
 
 ### 3. Run the Application
 
@@ -53,7 +44,7 @@ python src/main.py
 ww1-images/
 ├── src/                    # Source code
 │   ├── main.py            # Main application
-│   ├── image_searcher.py  # Google Custom Search integration
+│   ├── url_processor.py   # URL processing and categorization
 │   └── image_downloader.py # Image download and processing
 ├── config/                # Configuration files
 │   └── config.py          # Application settings
@@ -66,6 +57,7 @@ ww1-images/
 │   ├── ships/
 │   └── general/
 ├── logs/                  # Application logs
+├── image_urls.txt         # Your list of image URLs
 ├── requirements.txt       # Python dependencies
 └── .env.example          # Environment variables template
 ```
@@ -74,24 +66,17 @@ ww1-images/
 
 Edit `config/config.py` to customize:
 
-- **Search Terms**: WWI-specific search queries
 - **Image Categories**: Keywords for automatic categorization
-- **Download Limits**: Maximum images per search/category
+- **Download Limits**: Maximum total images
 - **Image Requirements**: Minimum size, supported formats
 
-## Search Terms
+## URL Input Format
 
-The system searches for images using these WWI-specific terms:
-
-- World War 1 1914-1918
-- Great War trench warfare
-- Battle of Somme 1916
-- Battle of Verdun 1916
-- Western Front WWI
-- WWI soldiers uniforms
-- WWI aircraft planes
-- WWI tanks equipment
-- And more...
+The `image_urls.txt` file supports:
+- One URL per line
+- Comments starting with #
+- Empty lines for organization
+- Any valid image URL format
 
 ## Image Categories
 
@@ -105,30 +90,31 @@ Images are automatically categorized into:
 - **Ships**: Naval vessels, submarines, destroyers
 - **General**: Other WWI-related images
 
-## API Limits
+## Download Limits
 
-- **Google Custom Search**: 100 free queries per day
-- **Rate Limiting**: 1 second delay between searches
-- **Image Limits**: Configurable max images per search and total
+- **Total Images**: Configurable limit (default: 1000)
+- **Image Quality**: Minimum size validation (default: 200x200)
+- **Supported Formats**: .jpg, .jpeg, .png, .gif, .bmp
 
 ## Logs
 
 The system creates detailed logs in the `logs/` directory:
 
 - `main.log`: General application logs
-- `search.log`: Search operation logs
+- `url_processor.log`: URL processing logs
 - `download.log`: Download operation logs
 
 ## Troubleshooting
 
-1. **API Key Issues**: Ensure your Google API key is valid and Custom Search API is enabled
-2. **No Images Found**: Check your Custom Search Engine configuration
-3. **Download Failures**: Review download logs for specific error messages
-4. **Rate Limiting**: The system includes built-in rate limiting, but you may need to adjust for your API quotas
+1. **Invalid URLs**: Check that URLs are properly formatted and accessible
+2. **Download Failures**: Review download logs for specific error messages
+3. **No Images Found**: Verify that your `image_urls.txt` file contains valid URLs
+4. **Image Quality Issues**: Adjust minimum size requirements in `config.py`
 
 ## Legal Considerations
 
-- This system searches for images with appropriate licensing (Creative Commons, public domain)
+- Ensure you have the right to download images from the provided URLs
 - Always verify image rights before use
 - Respect copyright and fair use guidelines
 - Consider the historical nature and sensitivity of WWI imagery
+- Be respectful of source websites and their terms of service

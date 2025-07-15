@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """
-WWI Image Search and Download System
-Main application to search for and download World War I images
+WWI Image Download System
+Downloads World War I images from provided URLs with automatic categorization
 """
 
-import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
 import logging
 from colorama import init, Fore, Style
 
@@ -15,7 +13,7 @@ from colorama import init, Fore, Style
 sys.path.append(str(Path(__file__).parent.parent))
 
 from config.config import *
-from src.image_searcher import WWIImageSearcher
+from src.url_processor import URLProcessor
 from src.image_downloader import WWIImageDownloader
 
 # Initialize colorama for colored output
@@ -35,25 +33,11 @@ def setup_logging():
     )
     return logging.getLogger(__name__)
 
-def check_api_keys():
-    """Check if required API keys are available"""
-    if not GOOGLE_API_KEY:
-        print(f"{Fore.RED}Error: GOOGLE_API_KEY not found in environment variables")
-        print(f"{Fore.YELLOW}Please set your Google Custom Search API key in .env file")
-        return False
-    
-    if not GOOGLE_CSE_ID:
-        print(f"{Fore.RED}Error: GOOGLE_CSE_ID not found in environment variables")
-        print(f"{Fore.YELLOW}Please set your Google Custom Search Engine ID in .env file")
-        return False
-    
-    return True
-
 def print_banner():
     """Print application banner"""
     print(f"{Fore.CYAN}{'='*60}")
-    print(f"{Fore.CYAN}    WWI Image Search and Download System")
-    print(f"{Fore.CYAN}    Collecting historical images from World War I")
+    print(f"{Fore.CYAN}    WWI Image Download System")
+    print(f"{Fore.CYAN}    Download and categorize images from URL list")
     print(f"{Fore.CYAN}{'='*60}")
     print()
 
@@ -74,45 +58,52 @@ def print_summary(download_stats: dict):
 
 def main():
     """Main application function"""
-    load_dotenv()
     print_banner()
     
     logger = setup_logging()
-    
-    # Check API keys
-    if not check_api_keys():
-        sys.exit(1)
     
     # Create directories
     IMAGES_DIR.mkdir(exist_ok=True)
     LOGS_DIR.mkdir(exist_ok=True)
     
     try:
-        # Initialize searcher and downloader
-        print(f"{Fore.BLUE}Initializing image searcher...")
-        searcher = WWIImageSearcher(GOOGLE_API_KEY, GOOGLE_CSE_ID)
+        # Initialize URL processor and downloader
+        print(f"{Fore.BLUE}Initializing URL processor...")
+        url_processor = URLProcessor()
         
         print(f"{Fore.BLUE}Initializing image downloader...")
         downloader = WWIImageDownloader()
         
-        # Search for images
-        print(f"{Fore.BLUE}Searching for WWI images...")
-        print(f"{Fore.YELLOW}Search terms: {len(WWI_SEARCH_TERMS)} different queries")
-        
-        categorized_results = searcher.search_all_terms()
-        
-        if not categorized_results:
-            print(f"{Fore.RED}No images found. Please check your search terms and API configuration.")
+        # Check if URLs file exists
+        if not URLS_FILE.exists():
+            print(f"{Fore.YELLOW}URLs file not found. Creating sample file...")
+            url_processor.create_sample_urls_file()
+            print(f"{Fore.RED}Please edit {URLS_FILE} with your image URLs and run again.")
             sys.exit(1)
         
-        # Print search results
-        print(f"\n{Fore.GREEN}Search Results:")
-        total_found = 0
-        for category, images in categorized_results.items():
-            print(f"{Fore.YELLOW}{category.capitalize()}: {Fore.WHITE}{len(images)} images found")
-            total_found += len(images)
+        # Load URLs from file
+        print(f"{Fore.BLUE}Loading URLs from {URLS_FILE}...")
+        urls = url_processor.load_urls_from_file(URLS_FILE)
         
-        print(f"{Fore.GREEN}Total found: {Fore.WHITE}{total_found} images")
+        if not urls:
+            print(f"{Fore.RED}No valid URLs found in {URLS_FILE}")
+            print(f"{Fore.YELLOW}Please check the file format and ensure it contains valid URLs.")
+            sys.exit(1)
+        
+        print(f"{Fore.GREEN}Loaded {len(urls)} URLs")
+        
+        # Process URLs and categorize
+        print(f"{Fore.BLUE}Processing and categorizing URLs...")
+        categorized_results = url_processor.process_urls(urls)
+        
+        # Print categorization results
+        print(f"\n{Fore.GREEN}Categorization Results:")
+        total_images = 0
+        for category, images in categorized_results.items():
+            print(f"{Fore.YELLOW}{category.capitalize()}: {Fore.WHITE}{len(images)} images")
+            total_images += len(images)
+        
+        print(f"{Fore.GREEN}Total images to download: {Fore.WHITE}{total_images}")
         
         # Download images
         print(f"\n{Fore.BLUE}Starting download process...")

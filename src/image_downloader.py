@@ -33,20 +33,30 @@ class WWIImageDownloader:
     
     def generate_descriptive_name(self, image_data: Dict, category: str) -> str:
         """Generate a descriptive filename from image metadata"""
-        title = image_data.get('title', '')
+        # Use the pre-generated descriptive name if available
+        if 'descriptive_name' in image_data:
+            return image_data['descriptive_name']
+        
+        # Fallback to URL-based naming
+        url = image_data.get('url', '')
         source = image_data.get('source', '')
         
-        # Clean up title for filename
-        title = re.sub(r'[^\w\s-]', '', title)
-        title = re.sub(r'[-\s]+', '_', title)
+        # Extract filename from URL
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        filename = Path(parsed.path).stem
+        
+        # Clean up filename
+        filename = re.sub(r'[^\w\s-]', '', filename)
+        filename = re.sub(r'[-\s]+', '_', filename)
         
         # Extract year if present
-        year_match = re.search(r'(191[4-8])', title)
+        year_match = re.search(r'(191[4-8])', url)
         year = year_match.group(1) if year_match else ''
         
         # Create base name
-        if title and len(title) > 5:
-            base_name = title[:50]  # Limit length
+        if filename and len(filename) > 5:
+            base_name = filename[:50]  # Limit length
         else:
             base_name = f"{category}_image"
         
